@@ -535,7 +535,71 @@
             document.querySelectorAll('.editable').forEach(el => {
                 el.setAttribute('contenteditable', 'true');
             });
+
+            // 페이지 로드 시 저장된 데이터 불러오기
+            loadData();
+
+            // 날짜 변경 시 해당 날짜의 데이터 로드
+            dateInput.addEventListener('change', () => {
+                loadData();
+            });
+
+            // 모든 editable 셀에 자동저장 이벤트 추가
+            document.querySelectorAll('.editable').forEach(el => {
+                el.addEventListener('input', () => {
+                    saveData();
+                });
+            });
+
+            // 메모 박스도 자동저장
+            document.querySelector('.memo-box').addEventListener('input', () => {
+                saveData();
+            });
         });
+
+        // 현재 날짜 키로 데이터 저장
+        function saveData() {
+            const dateKey = document.getElementById('dateInput').value;
+            if (!dateKey) return;
+
+            const data = {
+                cells: [],
+                memo: document.querySelector('.memo-box').innerHTML
+            };
+
+            document.querySelectorAll('.editable').forEach((el, index) => {
+                data.cells.push({
+                    index: index,
+                    value: el.innerText
+                });
+            });
+
+            localStorage.setItem(dateKey, JSON.stringify(data));
+        }
+
+        // 현재 날짜 키로 데이터 불러오기
+        function loadData() {
+            const dateKey = document.getElementById('dateInput').value;
+            if (!dateKey) return;
+
+            const savedData = localStorage.getItem(dateKey);
+            if (savedData) {
+                const data = JSON.parse(savedData);
+
+                // 셀 데이터 복원
+                const editableCells = document.querySelectorAll('.editable');
+                data.cells.forEach(cell => {
+                    if (editableCells[cell.index]) {
+                        editableCells[cell.index].innerText = cell.value;
+                    }
+                });
+
+                // 메모 복원
+                if (data.memo) {
+                    document.querySelector('.memo-box').innerHTML = data.memo;
+                }
+            }
+        }
 
         function clearData() {
             if(confirm('모든 숫자 데이터를 초기화하시겠습니까? (🌸)')) {
@@ -545,6 +609,11 @@
                         td.innerText = '';
                     }
                 });
+                // 현재 날짜의 로컬스토리지 데이터 삭제
+                const dateKey = document.getElementById('dateInput').value;
+                if (dateKey) {
+                    localStorage.removeItem(dateKey);
+                }
             }
         }
     </script>
