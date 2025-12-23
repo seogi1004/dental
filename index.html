@@ -64,6 +64,13 @@
             transform: translateY(-2px);
         }
 
+        .btn-yellow { background-color: #F6E05E; }
+        .btn-yellow:hover { background-color: #ECC94B; }
+        .btn-green { background-color: #A8D5BA; }
+        .btn-green:hover { background-color: #8BC9A3; }
+        .btn-gray { background-color: #B5C7D3; }
+        .btn-gray:hover { background-color: #9BB3C3; }
+
         /* A4 용지 컨테이너 */
         .page {
             width: 210mm;
@@ -308,13 +315,13 @@
         <button class="btn" onclick="window.print()">
             <span>🖨️</span> 인쇄하기
         </button>
-        <button class="btn" style="background-color: #F6E05E;" onclick="loadDefaultValues()">
+        <button class="btn btn-yellow" onclick="loadDefaultValues()">
             <span>📦</span> 기본값 가져오기
         </button>
-        <button class="btn" style="background-color: #A8D5BA;" onclick="copyFromPrevious()">
+        <button class="btn btn-green" onclick="copyFromPrevious()">
             <span>📋</span> 이전 데이터 복사
         </button>
-        <button class="btn" style="background-color: #B5C7D3;" onclick="clearData()">
+        <button class="btn btn-gray" onclick="clearData()">
             <span>🗑️</span> 모두 지우기
         </button>
     </div>
@@ -333,7 +340,7 @@
                     점검일자 : <input type="text" class="meta-input" id="dateInput" placeholder="YYYY-MM-DD">
                 </div>
                 <div class="meta-row">
-                    점검자 : <input type="text" class="meta-input" value="최지원" placeholder="이름 입력">
+                    점검자 : <input type="text" class="meta-input" id="inspectorInput" value="최지원" placeholder="이름 입력">
                 </div>
             </div>
         </header>
@@ -645,6 +652,11 @@
             document.querySelector('.memo-box').addEventListener('input', () => {
                 saveData();
             });
+
+            // 점검자 이름도 자동저장
+            document.getElementById('inspectorInput').addEventListener('input', () => {
+                saveData();
+            });
         });
 
         // 날짜 형식 유효성 검사 (YYYY-MM-DD)
@@ -671,7 +683,8 @@
 
             const data = {
                 tables: {},
-                memo: document.querySelector('.memo-box').innerHTML
+                memo: document.querySelector('.memo-box').innerHTML,
+                inspector: document.getElementById('inspectorInput').value
             };
 
             // 각 테이블별로 데이터 저장
@@ -705,7 +718,7 @@
             localStorage.setItem(dateKey, JSON.stringify(data));
         }
 
-        // 화면 초기화 (HTML 기본값으로)
+        // 화면 초기화 (빈 값으로)
         function resetToDefault() {
             document.querySelectorAll('td.editable').forEach(td => {
                 if (!td.classList.contains('label-col') && !td.hasAttribute('placeholder')) {
@@ -717,7 +730,52 @@
                 }
             });
             const memoBox = document.querySelector('.memo-box');
-            memoBox.innerHTML = '<span class="memo-title" contenteditable="false">📝 Order Note / 비고</span><br>';
+            memoBox.innerHTML = DEFAULT_MEMO;
+        }
+
+        // 공통: 테이블 데이터 적용
+        function applyTableData(data) {
+            if (!data.tables) return;
+
+            TABLE_IDS.forEach(tableId => {
+                const table = document.getElementById(tableId);
+                if (!table || !data.tables[tableId]) return;
+
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach((row, rowIndex) => {
+                    const labelCell = row.querySelector('.label-col') || row.cells[0];
+                    const labelText = labelCell ? labelCell.innerText.trim() : '';
+                    const rowKey = `${rowIndex}:${labelText}`;
+
+                    // 정확한 키로 찾거나, rowIndex로 시작하는 키 찾기 (사용자 정의 품명 호환)
+                    let savedValues = data.tables[tableId][rowKey];
+                    if (!savedValues) {
+                        const matchingKey = Object.keys(data.tables[tableId]).find(k => k.startsWith(`${rowIndex}:`));
+                        if (matchingKey) {
+                            savedValues = data.tables[tableId][matchingKey];
+                        }
+                    }
+
+                    if (savedValues) {
+                        const editableCells = row.querySelectorAll('.editable');
+                        editableCells.forEach((cell, cellIndex) => {
+                            if (savedValues[cellIndex] !== undefined) {
+                                cell.innerText = savedValues[cellIndex];
+                            }
+                        });
+                    }
+                });
+            });
+
+            // 메모 복원
+            if (data.memo) {
+                document.querySelector('.memo-box').innerHTML = data.memo;
+            }
+
+            // 점검자 복원
+            if (data.inspector) {
+                document.getElementById('inspectorInput').value = data.inspector;
+            }
         }
 
         // 현재 날짜 키로 데이터 불러오기
@@ -727,50 +785,14 @@
 
             const savedData = localStorage.getItem(dateKey);
             if (!savedData) {
-                // 저장된 데이터가 없으면 HTML 기본값 유지 (초기화하지 않음)
+                // 저장된 데이터가 없으면 기본값으로 초기화
+                loadDefaultValues(false);
                 return;
             }
 
             try {
                 const data = JSON.parse(savedData);
-
-                // 각 테이블별로 데이터 복원
-                if (data.tables) {
-                    TABLE_IDS.forEach(tableId => {
-                        const table = document.getElementById(tableId);
-                        if (!table || !data.tables[tableId]) return;
-
-                        const rows = table.querySelectorAll('tbody tr');
-                        rows.forEach((row, rowIndex) => {
-                            const labelCell = row.querySelector('.label-col') || row.cells[0];
-                            const labelText = labelCell ? labelCell.innerText.trim() : '';
-                            const rowKey = `${rowIndex}:${labelText}`;
-
-                            // 정확한 키로 찾거나, rowIndex로 시작하는 키 찾기 (사용자 정의 품명 호환)
-                            let savedValues = data.tables[tableId][rowKey];
-                            if (!savedValues) {
-                                const matchingKey = Object.keys(data.tables[tableId]).find(k => k.startsWith(`${rowIndex}:`));
-                                if (matchingKey) {
-                                    savedValues = data.tables[tableId][matchingKey];
-                                }
-                            }
-
-                            if (savedValues) {
-                                const editableCells = row.querySelectorAll('.editable');
-                                editableCells.forEach((cell, cellIndex) => {
-                                    if (savedValues[cellIndex] !== undefined) {
-                                        cell.innerText = savedValues[cellIndex];
-                                    }
-                                });
-                            }
-                        });
-                    });
-                }
-
-                // 메모 복원
-                if (data.memo) {
-                    document.querySelector('.memo-box').innerHTML = data.memo;
-                }
+                applyTableData(data);
             } catch (e) {
                 console.error('데이터 로드 오류:', e);
                 // 손상된 데이터 삭제 후 초기화
@@ -791,9 +813,9 @@
             }
         }
 
-        // 기본값 불러오기
-        function loadDefaultValues() {
-            if(!confirm('기본값을 불러오시겠습니까? 현재 데이터는 덮어씌워집니다.')) {
+        // 기본값 불러오기 (showConfirm: 확인창 표시 여부)
+        function loadDefaultValues(showConfirm = true) {
+            if(showConfirm && !confirm('기본값을 불러오시겠습니까? 현재 데이터는 덮어씌워집니다.')) {
                 return;
             }
 
@@ -825,7 +847,10 @@
 
             // 현재 날짜로 저장
             saveData();
-            alert('기본값을 불러왔습니다!');
+
+            if (showConfirm) {
+                alert('기본값을 불러왔습니다!');
+            }
         }
 
         // 이전 날짜 데이터 복사
@@ -862,44 +887,7 @@
                 if (savedData) {
                     try {
                         const data = JSON.parse(savedData);
-
-                        // 각 테이블별로 데이터 복원
-                        if (data.tables) {
-                            TABLE_IDS.forEach(tableId => {
-                                const table = document.getElementById(tableId);
-                                if (!table || !data.tables[tableId]) return;
-
-                                const rows = table.querySelectorAll('tbody tr');
-                                rows.forEach((row, rowIndex) => {
-                                    const labelCell = row.querySelector('.label-col') || row.cells[0];
-                                    const labelText = labelCell ? labelCell.innerText.trim() : '';
-                                    const rowKey = `${rowIndex}:${labelText}`;
-
-                                    // 정확한 키로 찾거나, rowIndex로 시작하는 키 찾기
-                                    let savedValues = data.tables[tableId][rowKey];
-                                    if (!savedValues) {
-                                        const matchingKey = Object.keys(data.tables[tableId]).find(k => k.startsWith(`${rowIndex}:`));
-                                        if (matchingKey) {
-                                            savedValues = data.tables[tableId][matchingKey];
-                                        }
-                                    }
-
-                                    if (savedValues) {
-                                        const editableCells = row.querySelectorAll('.editable');
-                                        editableCells.forEach((cell, cellIndex) => {
-                                            if (savedValues[cellIndex] !== undefined) {
-                                                cell.innerText = savedValues[cellIndex];
-                                            }
-                                        });
-                                    }
-                                });
-                            });
-                        }
-
-                        // 메모 복원
-                        if (data.memo) {
-                            document.querySelector('.memo-box').innerHTML = data.memo;
-                        }
+                        applyTableData(data);
 
                         // 현재 날짜로 저장
                         saveData();
