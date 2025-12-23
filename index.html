@@ -332,7 +332,7 @@
             <div class="full-row">
                 <section>
                     <h2>1. Hand Files <span>Unit: Pack/EA</span></h2>
-                    <table>
+                    <table id="table-handfiles">
                         <thead>
                             <tr>
                                 <th style="width: 14%;">Size (ISO)</th>
@@ -368,7 +368,7 @@
             <div>
                 <section>
                     <h2>2. Paper Points & GP Cones</h2>
-                    <table>
+                    <table id="table-paperpoints">
                         <thead>
                             <tr>
                                 <th style="width: 25%">Size</th>
@@ -396,7 +396,7 @@
 
                  <section>
                     <h2>4. Etc</h2>
-                    <table>
+                    <table id="table-etc">
                         <thead>
                             <tr>
                                 <th>Item Name</th>
@@ -433,7 +433,7 @@
                     <div class="sub-section-title">
                         Wave One (Reciprocating)
                     </div>
-                    <table>
+                    <table id="table-waveone">
                         <thead><tr><th>Type</th><th>Color</th><th style="width: 20%">Qty</th></tr></thead>
                         <tbody>
                             <tr><td class="label-col">Small (#20)</td><td style="color:#d69e2e; font-weight: bold;">● Yellow</td><td class="editable">4</td></tr>
@@ -447,7 +447,7 @@
                     <div class="sub-section-title">
                         Pro-Taper (Universal / Gold)
                     </div>
-                    <table>
+                    <table id="table-protaper">
                         <thead><tr><th style="width: 25%">Series</th><th>File</th><th style="width: 20%">Qty</th></tr></thead>
                         <tbody>
                             <tr><td rowspan="3" class="group-col">GOLD</td><td class="label-col">S1 (Purple)</td><td class="editable">1</td></tr>
@@ -468,7 +468,7 @@
                      <div class="sub-section-title">
                          Accessory GP Cones
                      </div>
-                     <table>
+                     <table id="table-accessorygp">
                          <thead>
                              <tr>
                                  <th>Type</th>
@@ -557,20 +557,49 @@
             });
         });
 
+        // 테이블 ID 목록
+        const TABLE_IDS = [
+            'table-handfiles',
+            'table-paperpoints',
+            'table-etc',
+            'table-waveone',
+            'table-protaper',
+            'table-accessorygp'
+        ];
+
         // 현재 날짜 키로 데이터 저장
         function saveData() {
             const dateKey = document.getElementById('dateInput').value;
             if (!dateKey) return;
 
             const data = {
-                cells: [],
+                tables: {},
                 memo: document.querySelector('.memo-box').innerHTML
             };
 
-            document.querySelectorAll('.editable').forEach((el, index) => {
-                data.cells.push({
-                    index: index,
-                    value: el.innerText
+            // 각 테이블별로 데이터 저장
+            TABLE_IDS.forEach(tableId => {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+
+                data.tables[tableId] = {};
+                const rows = table.querySelectorAll('tbody tr');
+
+                rows.forEach((row, rowIndex) => {
+                    // 행의 라벨 찾기 (label-col 또는 첫번째 셀)
+                    const labelCell = row.querySelector('.label-col') || row.cells[0];
+                    const rowKey = labelCell ? labelCell.innerText.trim() : `row-${rowIndex}`;
+
+                    // 해당 행의 editable 셀들 저장
+                    const editableCells = row.querySelectorAll('.editable');
+                    const cellValues = [];
+                    editableCells.forEach(cell => {
+                        cellValues.push(cell.innerText);
+                    });
+
+                    if (cellValues.length > 0) {
+                        data.tables[tableId][rowKey] = cellValues;
+                    }
                 });
             });
 
@@ -586,13 +615,29 @@
             if (savedData) {
                 const data = JSON.parse(savedData);
 
-                // 셀 데이터 복원
-                const editableCells = document.querySelectorAll('.editable');
-                data.cells.forEach(cell => {
-                    if (editableCells[cell.index]) {
-                        editableCells[cell.index].innerText = cell.value;
-                    }
-                });
+                // 각 테이블별로 데이터 복원
+                if (data.tables) {
+                    TABLE_IDS.forEach(tableId => {
+                        const table = document.getElementById(tableId);
+                        if (!table || !data.tables[tableId]) return;
+
+                        const rows = table.querySelectorAll('tbody tr');
+                        rows.forEach((row, rowIndex) => {
+                            const labelCell = row.querySelector('.label-col') || row.cells[0];
+                            const rowKey = labelCell ? labelCell.innerText.trim() : `row-${rowIndex}`;
+
+                            if (data.tables[tableId][rowKey]) {
+                                const editableCells = row.querySelectorAll('.editable');
+                                const savedValues = data.tables[tableId][rowKey];
+                                editableCells.forEach((cell, cellIndex) => {
+                                    if (savedValues[cellIndex] !== undefined) {
+                                        cell.innerText = savedValues[cellIndex];
+                                    }
+                                });
+                            }
+                        });
+                    });
+                }
 
                 // 메모 복원
                 if (data.memo) {
