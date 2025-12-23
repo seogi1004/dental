@@ -588,7 +588,9 @@
                 rows.forEach((row, rowIndex) => {
                     // 행의 라벨 찾기 (label-col 또는 첫번째 셀)
                     const labelCell = row.querySelector('.label-col') || row.cells[0];
-                    const rowKey = labelCell ? labelCell.innerText.trim() : `row-${rowIndex}`;
+                    const labelText = labelCell ? labelCell.innerText.trim() : '';
+                    // rowIndex를 포함하여 고유 키 생성 (중복 라벨 문제 방지)
+                    const rowKey = `${rowIndex}:${labelText}`;
 
                     // 해당 행의 editable 셀들 저장
                     const editableCells = row.querySelectorAll('.editable');
@@ -624,7 +626,9 @@
                         const rows = table.querySelectorAll('tbody tr');
                         rows.forEach((row, rowIndex) => {
                             const labelCell = row.querySelector('.label-col') || row.cells[0];
-                            const rowKey = labelCell ? labelCell.innerText.trim() : `row-${rowIndex}`;
+                            const labelText = labelCell ? labelCell.innerText.trim() : '';
+                            // rowIndex를 포함하여 고유 키 생성 (저장할 때와 동일한 방식)
+                            const rowKey = `${rowIndex}:${labelText}`;
 
                             if (data.tables[tableId][rowKey]) {
                                 const editableCells = row.querySelectorAll('.editable');
@@ -647,13 +651,17 @@
         }
 
         function clearData() {
-            if(confirm('모든 숫자 데이터를 초기화하시겠습니까? (🌸)')) {
+            if(confirm('모든 데이터를 초기화하시겠습니까? (🌸)')) {
                 document.querySelectorAll('td.editable').forEach(td => {
                     // label-col 클래스가 없고, placeholder 속성이 없는 셀만 초기화 (숫자 데이터 셀)
                     if (!td.classList.contains('label-col') && !td.hasAttribute('placeholder')) {
                         td.innerText = '';
                     }
                 });
+                // 메모 박스도 초기화
+                const memoBox = document.querySelector('.memo-box');
+                memoBox.innerHTML = '<span class="memo-title" contenteditable="false">📝 Order Note / 비고</span><br>';
+
                 // 현재 날짜의 로컬스토리지 데이터 삭제
                 const dateKey = document.getElementById('dateInput').value;
                 if (dateKey) {
