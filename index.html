@@ -20,7 +20,7 @@
 
         @page {
             size: A4;
-            margin: 10mm;
+            margin: 5mm;
         }
 
         body {
@@ -119,7 +119,7 @@
 
         .meta-input {
             border: none;
-            border-bottom: 1px solid #ccc;
+            border-bottom: 1px solid var(--border-color);
             width: 110px;
             font-family: 'Noto Sans KR', sans-serif;
             font-size: 10.5pt;
@@ -299,12 +299,38 @@
             margin-bottom: 5px;
         }
 
+        .doc-footer {
+            position: absolute;
+            bottom: 10mm;
+            right: 15mm;
+            font-size: 7pt;
+            color: #ddd;
+        }
+
         @media print {
             body { background: none; padding: 0; margin: 0; }
             .control-panel { display: none; }
-            .page { width: 100%; margin: 0; padding: 5mm 10mm; box-shadow: none; border-radius: 0; }
+            .page { width: 100%; margin: 0; padding: 3mm 5mm; box-shadow: none; border-radius: 0; }
             .meta-input { border-bottom: 1px solid #000; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+            /* 인쇄 시 여백 축소 */
+            header { padding-bottom: 8px; margin-bottom: 15px; }
+            h1 { font-size: 22pt; }
+            h2 { padding: 4px 10px; margin-bottom: 6px; font-size: 13pt; }
+            section { margin-bottom: 15px; }
+            .layout-grid { gap: 15px; }
+            .sub-section-title { margin-top: 12px; font-size: 9.5pt; }
+            table { font-size: 8.5pt; }
+            th { padding: 5px 3px; font-size: 8.5pt; }
+            td { padding: 4px 3px; }
+            .memo-box { min-height: 60px; padding: 8px; margin-top: 10px; }
+            .signature-area { margin-top: 15px; }
+            .bunny-icon { width: 50px; height: 50px; }
+            .clinic-name { font-size: 12pt; }
+
+            /* Pro-Taper 섹션부터 2페이지로 */
+            .print-page-break { page-break-before: always; }
         }
     </style>
 </head>
@@ -464,7 +490,7 @@
                     </table>
 
                     <!-- ProTaper -->
-                    <div class="sub-section-title">
+                    <div class="sub-section-title print-page-break">
                         Pro-Taper (Universal / Gold)
                     </div>
                     <table id="table-protaper">
@@ -541,6 +567,7 @@
             </div>
 
         </div> <!-- Grid End -->
+        <div class="doc-footer">Created by 최지원</div>
     </div> <!-- Page End -->
 
     <script>
@@ -802,7 +829,7 @@
         }
 
         function clearData() {
-            if(confirm('모든 데이터를 지우시겠습니까?')) {
+            if(confirm('🗑️ 모든 데이터를 지울까요? 정말요~? 🥺')) {
                 resetToDefault();
 
                 // 현재 날짜의 로컬스토리지 데이터 삭제
@@ -815,7 +842,7 @@
 
         // 기본값 불러오기 (showConfirm: 확인창 표시 여부)
         function loadDefaultValues(showConfirm = true) {
-            if(showConfirm && !confirm('기본값을 불러오시겠습니까? 현재 데이터는 덮어씌워집니다.')) {
+            if(showConfirm && !confirm('📦 기본값을 불러올까요~? ✨\n현재 데이터는 덮어씌워져요!')) {
                 return;
             }
 
@@ -848,9 +875,6 @@
             // 현재 날짜로 저장
             saveData();
 
-            if (showConfirm) {
-                alert('기본값을 불러왔습니다!');
-            }
         }
 
         // 이전 날짜 데이터 복사
@@ -859,7 +883,7 @@
 
             // 현재 날짜 유효성 검사
             if (!currentDate || !isValidDate(currentDate)) {
-                alert('먼저 유효한 날짜를 입력해주세요. (YYYY-MM-DD)');
+                alert('🗓️ 먼저 유효한 날짜를 입력해주세요~! (YYYY-MM-DD)');
                 return;
             }
 
@@ -874,7 +898,7 @@
             }
 
             if (savedDates.length === 0) {
-                alert('복사할 수 있는 이전 데이터가 없습니다.');
+                alert('🐰 아직 복사할 수 있는 이전 데이터가 없어요~!');
                 return;
             }
 
@@ -882,7 +906,7 @@
             savedDates.sort((a, b) => b.localeCompare(a));
             const latestDate = savedDates[0];
 
-            if (confirm(`${latestDate} 데이터를 불러올까요?`)) {
+            if (confirm(`📋 ${latestDate} 데이터를 불러올까요~? 🦷✨`)) {
                 const savedData = localStorage.getItem(latestDate);
                 if (savedData) {
                     try {
@@ -891,10 +915,9 @@
 
                         // 현재 날짜로 저장
                         saveData();
-                        alert('데이터를 복사했습니다! 수정 후 자동 저장됩니다.');
                     } catch (e) {
                         console.error('데이터 복사 오류:', e);
-                        alert('데이터 복사 중 오류가 발생했습니다.');
+                        alert('😢 앗, 데이터 복사 중 오류가 발생했어요~');
                     }
                 }
             }
