@@ -119,7 +119,7 @@
 
         .meta-input {
             border: none;
-            border-bottom: 1px solid #ccc;
+            border-bottom: 1px solid var(--border-color);
             width: 110px;
             font-family: 'Noto Sans KR', sans-serif;
             font-size: 10.5pt;
@@ -297,6 +297,14 @@
             width: 80px;
             height: 80px;
             margin-bottom: 5px;
+        }
+
+        .doc-footer {
+            position: absolute;
+            bottom: 10mm;
+            right: 15mm;
+            font-size: 7pt;
+            color: #ddd;
         }
 
         @media print {
@@ -559,6 +567,7 @@
             </div>
 
         </div> <!-- Grid End -->
+        <div class="doc-footer">Created by 최지원</div>
     </div> <!-- Page End -->
 
     <script>
