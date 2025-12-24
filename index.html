@@ -316,8 +316,8 @@
             .meta-input { border-bottom: 1px solid var(--main-pink); }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
-            /* ETC 섹션은 page-break 하지 않음 (1페이지에 포함) */
-            .print-page-break { page-break-before: auto; }
+            /* 페이지 분할 방지 */
+            section, table { page-break-inside: avoid; }
 
             /* 1페이지에 맞추기 위한 최대 압축 */
             header { padding-bottom: 3px; margin-bottom: 6px; border-bottom-width: 1px; }
@@ -449,7 +449,7 @@
                     </table>
                 </section>
 
-                 <section class="print-page-break">
+                 <section>
                     <h2>4. Etc</h2>
                     <table id="table-etc">
                         <thead>
@@ -499,7 +499,7 @@
                     </table>
 
                     <!-- ProTaper -->
-                    <div class="sub-section-title print-page-break">
+                    <div class="sub-section-title">
                         Pro-Taper (Universal / Gold)
                     </div>
                     <table id="table-protaper">
