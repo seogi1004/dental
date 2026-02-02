@@ -10,7 +10,24 @@
         
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #FDFBF7; /* 메인 배경: 크림 아이보리 */
+            color: #4A4543; /* 메인 텍스트: 웜 그레이 */
+        }
+
+        /* 부드러운 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F2EBE5;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #C8B6A6;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8D7B68;
         }
 
         /* 인쇄 전용 스타일 */
@@ -30,54 +47,91 @@
                 padding: 0;
                 border: none;
                 box-shadow: none;
+                background-color: white !important;
+                color: black !important;
             }
             .no-print {
                 display: none !important;
             }
-            /* 인쇄 시 입력창 테두리 제거 및 텍스트처럼 보이게 */
+            /* 인쇄 시 입력창 스타일 초기화 */
             input, textarea {
                 border: none !important;
                 background: transparent !important;
                 resize: none;
                 padding: 0;
+                color: black !important;
             }
-            /* 인쇄 시 셀렉트 박스 화살표 제거 (브라우저마다 다를 수 있음) */
             select {
                 border: none;
                 appearance: none;
                 background: transparent;
+                color: black !important;
+            }
+            /* 인쇄 시 탭 배경 제거 */
+            .bg-warm-paper {
+                background-color: white !important;
             }
         }
         
         .paper-shadow {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 10px 30px -5px rgba(141, 123, 104, 0.15); /* 부드러운 브라운 그림자 */
+        }
+
+        /* 커스텀 모달 스타일 */
+        #custom-modal {
+            background-color: rgba(74, 69, 67, 0.4); /* 웜톤 오버레이 */
+            backdrop-filter: blur(2px);
+            transition: opacity 0.2s ease-in-out;
+        }
+        
+        /* 종이 질감 느낌을 위한 클래스 */
+        .bg-warm-paper {
+            background-color: #ffffff;
+            border: 1px solid #F0EAE4;
+        }
+
+        /* 탭 활성화 스타일 */
+        .tab-active {
+            background-color: #8D7B68;
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .tab-inactive {
+            background-color: #EBE5DD;
+            color: #8D7B68;
+            font-weight: 500;
+        }
+        .tab-inactive:hover {
+            background-color: #DBCCC0;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+<body class="min-h-screen p-4 md:p-8 flex justify-center items-start">
 
     <!-- 메인 컨테이너 -->
-    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden min-h-[800px]">
+    <div class="w-full max-w-5xl bg-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.05)] overflow-hidden min-h-[850px] border border-[#F0EAE4]">
         
-        <!-- 헤더 & 탭 메뉴 (인쇄 시 숨김) -->
-        <div class="bg-teal-600 p-4 text-white flex justify-between items-center no-print">
-            <h1 class="text-xl font-bold flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+        <!-- 헤더 & 탭 메뉴 -->
+        <div class="bg-[#8D7B68] p-6 text-white flex flex-col md:flex-row justify-between items-center no-print rounded-t-3xl shadow-sm">
+            <h1 class="text-2xl font-bold flex items-center gap-3 tracking-wide">
+                <!-- 따뜻한 느낌의 아이콘으로 변경 -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-[#FDFBF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                더데이치과 연차 통합 관리 시스템
+                <span class="text-[#FDFBF7]">더데이치과</span> 
+                <span class="text-[#EBE5DD] font-normal text-lg">| 연차 관리</span>
             </h1>
-            <div class="flex gap-2">
-                <button onclick="switchTab('form')" id="btn-form" class="px-4 py-2 bg-white text-teal-700 rounded font-bold shadow transition hover:bg-teal-50">연차 신청서</button>
-                <button onclick="switchTab('list')" id="btn-list" class="px-4 py-2 bg-teal-700 text-teal-100 rounded hover:bg-teal-800 transition">연차 현황표</button>
+            <div class="flex gap-3 mt-4 md:mt-0 bg-[#7A6A59] p-1.5 rounded-full">
+                <button onclick="switchTab('form')" id="btn-form" class="px-6 py-2 rounded-full transition-all duration-300 shadow-sm tab-active">연차 신청서</button>
+                <button onclick="switchTab('list')" id="btn-list" class="px-6 py-2 rounded-full transition-all duration-300 tab-inactive">연차 현황표</button>
             </div>
         </div>
 
         <!-- 탭 1: 연차 신청서 (A4 양식) -->
-        <div id="tab-form" class="p-8 bg-gray-50 flex flex-col items-center">
+        <div id="tab-form" class="p-8 bg-[#FDFBF7] flex flex-col items-center">
             
-            <div class="w-full flex justify-end mb-4 no-print">
-                <button onclick="window.print()" class="flex items-center gap-2 bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800">
+            <div class="w-full flex justify-end mb-6 no-print">
+                <button onclick="window.print()" class="flex items-center gap-2 bg-[#A4907C] text-white px-5 py-2.5 rounded-xl hover:bg-[#8D7B68] transition shadow-sm font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                     </svg>
@@ -86,36 +140,36 @@
             </div>
 
             <!-- 실제 A4 용지 영역 -->
-            <div id="print-area" class="bg-white p-[20mm] w-[210mm] min-h-[297mm] paper-shadow mx-auto text-black relative">
+            <div id="print-area" class="bg-white p-[20mm] w-[210mm] min-h-[297mm] paper-shadow mx-auto text-[#333] relative rounded-sm">
                 
-                <h2 class="text-3xl font-bold text-center underline underline-offset-8 mb-10 tracking-widest">연차(휴가) 신청서</h2>
+                <h2 class="text-3xl font-bold text-center underline underline-offset-8 mb-10 tracking-widest text-[#222]">연차(휴가) 신청서</h2>
 
                 <!-- 결재란 -->
                 <div class="flex justify-end mb-8">
-                    <table class="border border-black text-center text-sm">
+                    <table class="border border-gray-800 text-center text-sm">
                         <tr>
-                            <th rowspan="2" class="bg-gray-100 border border-black px-2 py-4 w-8 writing-vertical">결<br>재</th>
-                            <td class="border border-black w-20 py-1">담 당</td>
-                            <td class="border border-black w-20 py-1">실 장</td>
-                            <td class="border border-black w-20 py-1">원 장</td>
+                            <th rowspan="2" class="bg-gray-100 border border-gray-800 px-2 py-4 w-8 writing-vertical font-serif">결<br>재</th>
+                            <td class="border border-gray-800 w-20 py-1">담 당</td>
+                            <td class="border border-gray-800 w-20 py-1">실 장</td>
+                            <td class="border border-gray-800 w-20 py-1">원 장</td>
                         </tr>
                         <tr>
-                            <td class="border border-black h-16"></td>
-                            <td class="border border-black h-16"></td>
-                            <td class="border border-black h-16"></td>
+                            <td class="border border-gray-800 h-16"></td>
+                            <td class="border border-gray-800 h-16"></td>
+                            <td class="border border-gray-800 h-16"></td>
                         </tr>
                     </table>
                 </div>
 
-                <!-- 입력 폼 테이블 -->
-                <table class="w-full border-collapse border border-black mb-6">
+                <!-- 입력 폼 테이블 (인쇄용 스타일은 Classic하게 유지) -->
+                <table class="w-full border-collapse border border-gray-800 mb-6">
                     <tr>
-                        <th class="border border-black bg-gray-100 p-3 w-32">성 명</th>
-                        <td class="border border-black p-2">
-                            <input type="text" placeholder="이름 입력" class="w-full p-1 outline-none">
+                        <th class="border border-gray-800 bg-gray-50 p-3 w-32 font-bold text-gray-800">성 명</th>
+                        <td class="border border-gray-800 p-2">
+                            <input type="text" placeholder="이름 입력" class="w-full p-1 outline-none font-medium placeholder-gray-300">
                         </td>
-                        <th class="border border-black bg-gray-100 p-3 w-32">소 속</th>
-                        <td class="border border-black p-2">
+                        <th class="border border-gray-800 bg-gray-50 p-3 w-32 font-bold text-gray-800">소 속</th>
+                        <td class="border border-gray-800 p-2">
                             <select class="w-full p-1 outline-none bg-transparent">
                                 <option>진료팀</option>
                                 <option>데스크팀</option>
@@ -124,128 +178,221 @@
                         </td>
                     </tr>
                     <tr>
-                        <th class="border border-black bg-gray-100 p-3">비상 연락처</th>
-                        <td colspan="3" class="border border-black p-2">
-                            <input type="text" placeholder="010-0000-0000" class="w-full p-1 outline-none">
+                        <th class="border border-gray-800 bg-gray-50 p-3 font-bold text-gray-800">비상 연락처</th>
+                        <td colspan="3" class="border border-gray-800 p-2">
+                            <input type="text" placeholder="010-0000-0000" class="w-full p-1 outline-none placeholder-gray-300">
                         </td>
                     </tr>
                     <tr>
-                        <th class="border border-black bg-gray-100 p-3">휴가 종류</th>
-                        <td colspan="3" class="border border-black p-3">
+                        <th class="border border-gray-800 bg-gray-50 p-3 font-bold text-gray-800">휴가 종류</th>
+                        <td colspan="3" class="border border-gray-800 p-3">
                             <div class="flex gap-4">
-                                <label class="flex items-center cursor-pointer"><input type="checkbox" class="mr-2"> 연차</label>
-                                <label class="flex items-center cursor-pointer"><input type="checkbox" class="mr-2"> 반차 (오전/오후)</label>
-                                <label class="flex items-center cursor-pointer"><input type="checkbox" class="mr-2"> 병가</label>
-                                <label class="flex items-center cursor-pointer"><input type="checkbox" class="mr-2"> 경조사</label>
-                                <label class="flex items-center cursor-pointer"><input type="checkbox" class="mr-2"> 기타</label>
+                                <label class="flex items-center cursor-pointer hover:bg-gray-50 rounded px-1"><input type="checkbox" class="mr-2 accent-gray-600"> 연차</label>
+                                <label class="flex items-center cursor-pointer hover:bg-gray-50 rounded px-1"><input type="checkbox" class="mr-2 accent-gray-600"> 반차 (오전/오후)</label>
+                                <label class="flex items-center cursor-pointer hover:bg-gray-50 rounded px-1"><input type="checkbox" class="mr-2 accent-gray-600"> 병가</label>
+                                <label class="flex items-center cursor-pointer hover:bg-gray-50 rounded px-1"><input type="checkbox" class="mr-2 accent-gray-600"> 경조사</label>
+                                <label class="flex items-center cursor-pointer hover:bg-gray-50 rounded px-1"><input type="checkbox" class="mr-2 accent-gray-600"> 기타</label>
                             </div>
                         </td>
                     </tr>
                     <tr>
-                        <th class="border border-black bg-gray-100 p-3">기 간</th>
-                        <td colspan="3" class="border border-black p-3">
+                        <th class="border border-gray-800 bg-gray-50 p-3 font-bold text-gray-800">기 간</th>
+                        <td colspan="3" class="border border-gray-800 p-3">
                             <div class="flex items-center gap-2 mb-2">
-                                <input type="date" class="border rounded px-2 py-1"> 부터 ~ <input type="date" class="border rounded px-2 py-1"> 까지
-                                <span class="ml-4">( 총 <input type="text" class="w-12 text-center border-b border-black outline-none" placeholder="0"> 일간 )</span>
+                                <input type="date" class="border border-gray-300 rounded px-2 py-1 text-gray-700"> 부터 ~ <input type="date" class="border border-gray-300 rounded px-2 py-1 text-gray-700"> 까지
+                                <span class="ml-4">( 총 <input type="text" class="w-12 text-center border-b border-gray-800 outline-none" placeholder="0"> 일간 )</span>
                             </div>
                             <div class="text-sm text-gray-600 mt-2">
-                                ※ 반차 시간: <input type="time" class="border rounded px-1"> ~ <input type="time" class="border rounded px-1">
+                                ※ 반차 시간: <input type="time" class="border border-gray-300 rounded px-1"> ~ <input type="time" class="border border-gray-300 rounded px-1">
                             </div>
                         </td>
                     </tr>
                     <tr>
-                        <th class="border border-black bg-gray-100 p-3">사 유</th>
-                        <td colspan="3" class="border border-black p-3 h-32 align-top">
-                            <textarea class="w-full h-full p-1 outline-none resize-none" placeholder="사유를 간단히 기재해 주세요 (예: 개인사정, 병원진료 등)"></textarea>
+                        <th class="border border-gray-800 bg-gray-50 p-3 font-bold text-gray-800">사 유</th>
+                        <td colspan="3" class="border border-gray-800 p-3 h-32 align-top">
+                            <textarea class="w-full h-full p-1 outline-none resize-none placeholder-gray-300" placeholder="사유를 간단히 기재해 주세요 (예: 개인사정, 병원진료 등)"></textarea>
                         </td>
                     </tr>
                     <tr>
-                        <th class="border border-black bg-gray-100 p-3">업무 인수인계<br>(중요)</th>
-                        <td colspan="3" class="border border-black p-3 h-40 align-top">
-                            <div class="mb-2"><strong>1. 예약 변경/취소 건:</strong></div>
-                            <textarea class="w-full h-10 mb-2 p-1 border-b border-dotted outline-none resize-none"></textarea>
-                            <div class="mb-2"><strong>2. 주요 전달 사항:</strong></div>
-                            <textarea class="w-full h-10 mb-2 p-1 border-b border-dotted outline-none resize-none"></textarea>
+                        <th class="border border-gray-800 bg-gray-50 p-3 font-bold text-gray-800">업무 인수인계<br>(중요)</th>
+                        <td colspan="3" class="border border-gray-800 p-3 h-40 align-top">
+                            <div class="mb-2 text-gray-700"><strong>1. 예약 변경/취소 건:</strong></div>
+                            <textarea class="w-full h-10 mb-2 p-1 border-b border-gray-300 border-dotted outline-none resize-none"></textarea>
+                            <div class="mb-2 text-gray-700"><strong>2. 주요 전달 사항:</strong></div>
+                            <textarea class="w-full h-10 mb-2 p-1 border-b border-gray-300 border-dotted outline-none resize-none"></textarea>
                             <div class="flex justify-end mt-4 items-center">
-                                <span class="font-bold mr-2">업무 대리자:</span>
-                                <input type="text" class="border-b border-black w-32 text-center outline-none" placeholder="서명">
+                                <span class="font-bold mr-2 text-gray-700">업무 대리자:</span>
+                                <input type="text" class="border-b border-gray-800 w-32 text-center outline-none" placeholder="서명">
                                 <span class="ml-1">(인)</span>
                             </div>
                         </td>
                     </tr>
                 </table>
 
-                <p class="text-center text-gray-600 mt-8 mb-16">
+                <p class="text-center text-gray-600 mt-8 mb-16 tracking-wide">
                     위와 같이 연차(휴가)를 신청하오니 허가하여 주시기 바랍니다.
                 </p>
 
                 <div class="text-center mt-12">
-                    <p class="text-xl mb-6 font-medium date-display">2024년 &nbsp;&nbsp;&nbsp;&nbsp;월 &nbsp;&nbsp;&nbsp;&nbsp;일</p>
+                    <p class="text-xl mb-6 font-medium date-display font-serif text-gray-800">2024년 &nbsp;&nbsp;&nbsp;&nbsp;월 &nbsp;&nbsp;&nbsp;&nbsp;일</p>
                     <div class="flex justify-center items-center gap-4 mb-10">
-                        <span class="text-xl font-bold">신 청 인 :</span>
-                        <input type="text" class="text-xl text-center border-b border-black w-40 outline-none" placeholder="이름">
-                        <span class="text-xl font-bold">(인)</span>
+                        <span class="text-xl font-bold font-serif text-gray-800">신 청 인 :</span>
+                        <input type="text" class="text-xl text-center border-b border-gray-800 w-40 outline-none font-serif" placeholder="이름">
+                        <span class="text-xl font-bold font-serif text-gray-800">(인)</span>
                     </div>
-                    <h3 class="text-2xl font-bold tracking-widest">더데이치과 귀중</h3>
+                    <h3 class="text-3xl font-bold tracking-widest font-serif text-gray-900 mt-16">더데이치과 귀중</h3>
                 </div>
 
             </div>
         </div>
 
-        <!-- 탭 2: 연차 현황표 (자동 계산) -->
-        <div id="tab-list" class="hidden p-8">
-            <div class="bg-white rounded-lg border p-6">
-                <div class="flex justify-between items-end mb-6">
+        <!-- 탭 2: 연차 현황표 -->
+        <div id="tab-list" class="hidden p-8 bg-[#FDFBF7]">
+            <div class="bg-warm-paper rounded-2xl shadow-sm p-8">
+                <div class="flex justify-between items-end mb-8 border-b border-[#F0EAE4] pb-6">
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-800">직원 연차 현황표</h2>
-                        <p class="text-gray-500 text-sm mt-1">사용 연차를 입력하면 잔여 연차가 자동으로 계산됩니다.</p>
+                        <h2 class="text-2xl font-bold text-[#5C5552]">직원 연차 현황표</h2>
+                        <p class="text-[#A4907C] text-sm mt-2">입력된 데이터는 브라우저에 자동 저장됩니다.</p>
                     </div>
-                    <div class="text-sm bg-blue-50 text-blue-700 px-3 py-2 rounded">
-                        * 1년 미만자: 1개월 개근 시 1일 발생<br>
-                        * 1년 이상자: 15일 + @ 발생
+                    <div class="flex gap-3">
+                        <button onclick="confirmAction('restoreSampleData')" class="px-4 py-2 bg-[#EBE5DD] text-[#8D7B68] text-sm rounded-xl hover:bg-[#DBCCC0] font-bold transition">
+                            샘플 데이터 복구
+                        </button>
+                        <button onclick="addStaff()" class="px-5 py-2 bg-[#8D7B68] text-white text-sm rounded-xl hover:bg-[#7A6A59] font-bold flex items-center gap-2 shadow-sm transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            직원 추가
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-sm bg-[#F9F7F2] text-[#8D7B68] px-5 py-4 rounded-xl mb-6 border border-[#F0EAE4] flex items-start gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <p class="font-medium mb-1">근로기준법 기준 발생 연차 안내</p>
+                        <ul class="list-disc list-inside opacity-80 space-y-1">
+                            <li>1년 미만: 1개월 개근 시 1일 발생 (최대 11일)</li>
+                            <li>1년 이상: 15일 + (2년마다 1일 추가, 최대 25일)</li>
+                        </ul>
                     </div>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-gray-700">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-b-2 border-gray-200">
+                <div class="overflow-x-auto rounded-xl border border-[#F0EAE4]">
+                    <table class="w-full text-sm text-left text-[#5C5552]">
+                        <thead class="text-xs text-[#8D7B68] uppercase bg-[#F2EBE5]">
                             <tr>
-                                <th class="px-4 py-3 text-center w-12">No</th>
-                                <th class="px-4 py-3">성명</th>
-                                <th class="px-4 py-3">직급</th>
-                                <th class="px-4 py-3">입사일</th>
-                                <th class="px-4 py-3 text-center bg-blue-50">발생 연차</th>
-                                <th class="px-4 py-3 text-center bg-red-50">사용 연차</th>
-                                <th class="px-4 py-3 text-center bg-green-50 font-bold">잔여 연차</th>
-                                <th class="px-4 py-3">비고</th>
+                                <th class="px-4 py-4 text-center w-14 font-bold">No</th>
+                                <th class="px-4 py-4 font-bold">성명</th>
+                                <th class="px-4 py-4 font-bold">직급</th>
+                                <th class="px-4 py-4 w-40 font-bold">입사일</th>
+                                <th class="px-4 py-4 text-center bg-[#EBE5DD] font-bold">발생</th>
+                                <th class="px-4 py-4 text-center bg-[#F5E6E6] text-[#A66E6E] font-bold">사용</th>
+                                <th class="px-4 py-4 text-center bg-[#E6F0E6] text-[#6E9675] font-bold">잔여</th>
+                                <th class="px-4 py-4 font-bold">비고</th>
+                                <th class="px-4 py-4 text-center w-20 font-bold">관리</th>
                             </tr>
                         </thead>
-                        <tbody id="staff-table-body">
-                            <!-- 자바스크립트로 6명 생성 -->
+                        <tbody id="staff-table-body" class="divide-y divide-[#F0EAE4]">
+                            <!-- 자바스크립트로 생성 -->
                         </tbody>
                     </table>
                 </div>
 
-                <div class="mt-4 flex justify-end">
-                    <button onclick="resetUsage()" class="text-sm text-gray-500 underline hover:text-red-500">사용내역 초기화</button>
+                <div class="mt-8 flex justify-end items-center gap-6">
+                    <button onclick="confirmAction('resetUsage')" class="text-sm text-[#A4907C] hover:text-[#8D7B68] underline decoration-dotted underline-offset-4 transition">
+                        1. 사용내역 초기화 (새해 갱신)
+                    </button>
+                    <button onclick="confirmAction('resetAllData')" class="text-sm text-[#C8B6A6] hover:text-[#A66E6E] underline decoration-dotted underline-offset-4 transition font-medium">
+                        2. 전체 명단 삭제 (완전 초기화)
+                    </button>
                 </div>
             </div>
         </div>
 
     </div>
 
+    <!-- 커스텀 모달 (웜톤 디자인) -->
+    <div id="custom-modal" class="fixed inset-0 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl p-8 w-96 max-w-full m-4 border border-[#F0EAE4]">
+            <h3 class="text-xl font-bold text-[#5C5552] mb-3" id="modal-title">확인</h3>
+            <p class="text-[#8D8D8D] mb-8 leading-relaxed" id="modal-message">정말 진행하시겠습니까?</p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeModal()" class="px-5 py-2.5 text-[#8D7B68] bg-[#F2EBE5] rounded-xl hover:bg-[#EBE5DD] transition font-medium">취소</button>
+                <button id="modal-confirm-btn" class="px-5 py-2.5 text-white bg-[#8D7B68] rounded-xl hover:bg-[#7A6A59] transition shadow-md font-medium">확인</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // 초기 데이터 (직원 6명)
-        const staffData = [
-            { name: "김실장", role: "총괄실장", date: "2020.01.01", total: 17 },
-            { name: "이팀장", role: "진료팀장", date: "2021.03.15", total: 16 },
-            { name: "박위생", role: "치위생사", date: "2023.05.01", total: 15 },
-            { name: "최위생", role: "치위생사", date: "2023.12.01", total: 15 },
-            { name: "정코디", role: "코디네이터", date: "2024.01.10", total: 11 },
-            { name: "강위생", role: "치위생사", date: "2024.02.01", total: 10 },
+        // 기본 데이터 (초기값)
+        const defaultStaffData = [
+            { name: "김실장", role: "총괄실장", date: "2020-01-01", total: 17, used: 0, memo: "" },
+            { name: "이팀장", role: "진료팀장", date: "2021-03-15", total: 16, used: 0, memo: "" },
+            { name: "박위생", role: "치위생사", date: "2023-05-01", total: 15, used: 0, memo: "" },
+            { name: "최위생", role: "치위생사", date: "2023-12-01", total: 15, used: 0, memo: "" },
+            { name: "정코디", role: "코디네이터", date: "2024-01-10", total: 11, used: 0, memo: "" },
+            { name: "강위생", role: "치위생사", date: "2024-02-01", total: 10, used: 0, memo: "" },
         ];
 
-        // 탭 전환 함수
+        let staffData = [];
+        let pendingAction = null; 
+        let pendingIndex = null;  
+
+        function loadData() {
+            const savedData = localStorage.getItem('dentalStaffData_v1');
+            if (savedData) {
+                staffData = JSON.parse(savedData);
+            } else {
+                staffData = JSON.parse(JSON.stringify(defaultStaffData));
+            }
+            renderTable();
+        }
+
+        function saveData() {
+            localStorage.setItem('dentalStaffData_v1', JSON.stringify(staffData));
+        }
+
+        function showModal(title, message, actionType, index = null) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+            
+            pendingAction = actionType;
+            pendingIndex = index;
+
+            // 버튼 색상 변경 (삭제/초기화는 경고색, 복구는 기본색)
+            if (['deleteStaff', 'resetUsage', 'resetAllData'].includes(actionType)) {
+                confirmBtn.className = "px-5 py-2.5 text-white bg-[#A66E6E] rounded-xl hover:bg-[#8E5D5D] transition shadow-md font-medium"; // 차분한 붉은색
+            } else {
+                confirmBtn.className = "px-5 py-2.5 text-white bg-[#8D7B68] rounded-xl hover:bg-[#7A6A59] transition shadow-md font-medium"; // 기본 브라운
+            }
+
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+            pendingAction = null;
+            pendingIndex = null;
+        }
+
+        document.getElementById('modal-confirm-btn').addEventListener('click', function() {
+            if (pendingAction === 'deleteStaff') {
+                realDeleteStaff(pendingIndex);
+            } else if (pendingAction === 'resetUsage') {
+                realResetUsage();
+            } else if (pendingAction === 'resetAllData') {
+                realResetAllData();
+            } else if (pendingAction === 'restoreSampleData') {
+                realRestoreSampleData();
+            }
+            closeModal();
+        });
+
         function switchTab(tabName) {
             const formTab = document.getElementById('tab-form');
             const listTab = document.getElementById('tab-list');
@@ -255,95 +402,142 @@
             if (tabName === 'form') {
                 formTab.classList.remove('hidden');
                 listTab.classList.add('hidden');
-                btnForm.classList.replace('bg-teal-700', 'bg-white');
-                btnForm.classList.replace('text-teal-100', 'text-teal-700');
-                btnForm.classList.add('font-bold');
                 
-                btnList.classList.replace('bg-white', 'bg-teal-700');
-                btnList.classList.replace('text-teal-700', 'text-teal-100');
-                btnList.classList.remove('font-bold');
+                // Active Style
+                btnForm.className = "px-6 py-2 rounded-full transition-all duration-300 shadow-sm tab-active";
+                btnList.className = "px-6 py-2 rounded-full transition-all duration-300 tab-inactive";
             } else {
                 formTab.classList.add('hidden');
                 listTab.classList.remove('hidden');
                 
-                btnList.classList.replace('bg-teal-700', 'bg-white');
-                btnList.classList.replace('text-teal-100', 'text-teal-700');
-                btnList.classList.add('font-bold');
-
-                btnForm.classList.replace('bg-white', 'bg-teal-700');
-                btnForm.classList.replace('text-teal-700', 'text-teal-100');
-                btnForm.classList.remove('font-bold');
+                // Active Style
+                btnList.className = "px-6 py-2 rounded-full transition-all duration-300 shadow-sm tab-active";
+                btnForm.className = "px-6 py-2 rounded-full transition-all duration-300 tab-inactive";
+                
+                loadData();
             }
         }
 
-        // 현황표 렌더링 함수
         function renderTable() {
             const tbody = document.getElementById('staff-table-body');
             tbody.innerHTML = '';
 
-            staffData.forEach((staff, index) => {
+            if (staffData.length === 0) {
                 const tr = document.createElement('tr');
-                tr.className = "bg-white border-b hover:bg-gray-50";
-                tr.innerHTML = `
-                    <td class="px-4 py-3 text-center font-medium text-gray-900">${index + 1}</td>
-                    <td class="px-4 py-3"><input type="text" value="${staff.name}" class="w-20 bg-transparent outline-none border-b border-transparent focus:border-blue-500"></td>
-                    <td class="px-4 py-3 text-gray-500">${staff.role}</td>
-                    <td class="px-4 py-3 text-gray-500">${staff.date}</td>
-                    <td class="px-4 py-3 text-center">
-                        <input type="number" id="total-${index}" value="${staff.total}" onchange="calculate(${index})" class="w-16 text-center bg-blue-50 border border-blue-100 rounded p-1">
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        <input type="number" id="used-${index}" value="0" step="0.5" onchange="calculate(${index})" class="w-16 text-center bg-red-50 border border-red-100 rounded p-1 font-bold text-red-600">
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        <span id="remain-${index}" class="font-bold text-green-600 text-lg">${staff.total}</span>
-                    </td>
-                    <td class="px-4 py-3">
-                        <input type="text" placeholder="메모" class="w-full text-xs text-gray-500 bg-transparent outline-none">
-                    </td>
-                `;
+                tr.innerHTML = `<td colspan="9" class="text-center py-16 text-[#A4907C]">등록된 직원이 없습니다.<br>우측 상단의 '+ 직원 추가' 버튼을 눌러주세요.</td>`;
+                tbody.appendChild(tr);
+                return;
+            }
+
+            staffData.forEach((staff, index) => {
+                const remain = (parseFloat(staff.total) || 0) - (parseFloat(staff.used) || 0);
+                
+                // 잔여 연차 색상 로직 (차분한 톤으로 변경)
+                let remainClass = "font-bold text-[#6E9675] text-lg"; // 차분한 그린
+                if (remain <= 0) remainClass = "font-bold text-[#A66E6E] text-lg"; // 차분한 레드
+
+                const tr = document.createElement('tr');
+                tr.className = "bg-white hover:bg-[#F9F7F2] transition-colors group";
+                
+                const cells = [
+                    `<td class="px-4 py-3 text-center text-[#A4907C] font-medium">${index + 1}</td>`,
+                    `<td class="px-4 py-3"><input type="text" value="${staff.name}" onchange="updateField(${index}, 'name', this.value)" class="w-20 bg-transparent outline-none border-b border-transparent focus:border-[#8D7B68] placeholder-[#DBCCC0] transition-colors" placeholder="이름"></td>`,
+                    `<td class="px-4 py-3"><input type="text" value="${staff.role}" onchange="updateField(${index}, 'role', this.value)" class="w-20 bg-transparent outline-none border-b border-transparent focus:border-[#8D7B68] text-[#8D8D8D] placeholder-[#DBCCC0] transition-colors" placeholder="직급"></td>`,
+                    `<td class="px-4 py-3"><input type="date" value="${staff.date}" onchange="updateDate(${index}, this.value)" class="w-full bg-transparent text-[#5C5552] outline-none border-b border-transparent focus:border-[#8D7B68] transition-colors cursor-pointer"></td>`,
+                    `<td class="px-4 py-3 text-center"><input type="number" value="${staff.total}" onchange="updateField(${index}, 'total', this.value)" class="w-16 text-center bg-[#EBE5DD] rounded-lg p-1.5 text-[#5C5552] font-medium focus:ring-1 focus:ring-[#8D7B68] outline-none"></td>`,
+                    `<td class="px-4 py-3 text-center"><input type="number" value="${staff.used}" step="0.5" onchange="updateField(${index}, 'used', this.value)" class="w-16 text-center bg-[#F5E6E6] rounded-lg p-1.5 text-[#A66E6E] font-bold focus:ring-1 focus:ring-[#A66E6E] outline-none"></td>`,
+                    `<td class="px-4 py-3 text-center"><span class="${remainClass}">${remain}</span></td>`,
+                    `<td class="px-4 py-3"><input type="text" value="${staff.memo || ''}" onchange="updateField(${index}, 'memo', this.value)" placeholder="메모" class="w-full text-xs text-[#8D8D8D] bg-transparent outline-none border-b border-transparent focus:border-[#8D7B68] placeholder-[#DBCCC0] transition-colors"></td>`,
+                    `<td class="px-4 py-3 text-center"><button onclick="confirmAction('deleteStaff', ${index})" class="text-[#DBCCC0] hover:text-[#A66E6E] transition p-2 rounded-full hover:bg-[#F5E6E6]" title="삭제"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></td>`
+                ];
+                
+                tr.innerHTML = cells.join('');
                 tbody.appendChild(tr);
             });
         }
 
-        // 계산 로직
-        function calculate(index) {
-            const totalInput = document.getElementById(`total-${index}`);
-            const usedInput = document.getElementById(`used-${index}`);
-            const remainSpan = document.getElementById(`remain-${index}`);
-
-            const total = parseFloat(totalInput.value) || 0;
-            const used = parseFloat(usedInput.value) || 0;
-            const remain = total - used;
-
-            remainSpan.innerText = remain;
-
-            // 잔여 연차가 0 이하면 빨간색 표시
-            if (remain <= 0) {
-                remainSpan.className = "font-bold text-red-600 text-lg";
+        function updateField(index, field, value) {
+            if (field === 'total' || field === 'used') {
+                staffData[index][field] = parseFloat(value) || 0;
             } else {
-                remainSpan.className = "font-bold text-green-600 text-lg";
+                staffData[index][field] = value;
+            }
+            saveData();
+            renderTable(); 
+        }
+
+        function updateDate(index, dateStr) {
+            staffData[index].date = dateStr;
+            if (dateStr) {
+                const joinDate = new Date(dateStr);
+                const today = new Date();
+                let years = today.getFullYear() - joinDate.getFullYear();
+                const m = today.getMonth() - joinDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < joinDate.getDate())) years--;
+
+                let leaveDays = 0;
+                if (years < 1) leaveDays = 11; 
+                else {
+                    const addedDays = Math.floor((years - 1) / 2);
+                    leaveDays = 15 + addedDays;
+                    if (leaveDays > 25) leaveDays = 25;
+                }
+                staffData[index].total = leaveDays;
+            }
+            saveData();
+            renderTable();
+        }
+
+        function addStaff() {
+            staffData.push({
+                name: "", role: "직원", date: new Date().toISOString().split('T')[0],
+                total: 11, used: 0, memo: ""
+            });
+            saveData();
+            renderTable();
+        }
+
+        function confirmAction(actionType, index = null) {
+            if (actionType === 'deleteStaff') {
+                showModal('직원 삭제', '정말 이 직원을 목록에서 삭제하시겠습니까?', 'deleteStaff', index);
+            } else if (actionType === 'resetUsage') {
+                showModal('사용 내역 초기화', '모든 직원의 [사용 연차]를 0으로 초기화합니다. (새해 갱신용)', 'resetUsage');
+            } else if (actionType === 'resetAllData') {
+                showModal('전체 명단 삭제', '모든 데이터를 삭제하고 빈 표로 만듭니다. (복구 불가)', 'resetAllData');
+            } else if (actionType === 'restoreSampleData') {
+                showModal('샘플 데이터 복구', '초기 샘플 데이터(예시)를 다시 불러옵니다. 현재 데이터는 사라집니다.', 'restoreSampleData');
             }
         }
 
-        function resetUsage() {
-            if(confirm('모든 사용 내역을 0으로 초기화 하시겠습니까?')) {
-                staffData.forEach((_, index) => {
-                    document.getElementById(`used-${index}`).value = 0;
-                    calculate(index);
-                });
-            }
+        function realDeleteStaff(index) {
+            staffData.splice(index, 1);
+            saveData();
+            renderTable();
         }
 
-        // 오늘 날짜 자동 세팅 (신청서 하단)
+        function realResetUsage() {
+            staffData.forEach(staff => staff.used = 0);
+            saveData();
+            renderTable();
+        }
+
+        function realResetAllData() {
+            staffData = [];
+            saveData();
+            renderTable();
+        }
+
+        function realRestoreSampleData() {
+            staffData = JSON.parse(JSON.stringify(defaultStaffData));
+            saveData();
+            renderTable();
+        }
+
         const today = new Date();
-        const year = today.getFullYear();
-        const month = today.getMonth() + 1;
-        const day = today.getDate();
-        document.querySelector('.date-display').innerText = `${year}년  ${month}월  ${day}일`;
+        document.querySelector('.date-display').innerText = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
 
-        // 초기화
-        renderTable();
+        loadData();
+
     </script>
 </body>
 </html>
