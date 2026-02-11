@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS 설정을 위한 style 태그 (type 속성 추가됨) -->
+    <!-- Tailwind CSS 설정을 위한 style 태그 -->
     <style type="text/tailwindcss">
         body { font-family: 'Noto Sans KR', sans-serif; }
         
@@ -57,23 +57,26 @@
         .count-badge.warning { @apply bg-red-50 text-red-600 border-red-200 font-bold; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen p-4 md:p-8 print:bg-white print:p-0">
+<body class="bg-gray-50 min-h-screen p-3 md:p-8 print:bg-white print:p-0">
 
     <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-xl overflow-hidden print:shadow-none">
         <!-- Header -->
-        <header class="bg-slate-800 text-white p-6 print:bg-white print:text-black print:border-b-2 print:border-black">
-            <h1 class="text-2xl font-bold flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-400 print:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
-                퇴사자 연차 정산 및 점검 리포트
+        <header class="bg-slate-800 text-white p-5 md:p-6 print:bg-white print:text-black print:border-b-2 print:border-black">
+            <!-- 모바일 타이틀 크기 조정 및 레이아웃 개선 -->
+            <h1 class="text-xl md:text-2xl font-bold flex flex-col md:flex-row md:items-center gap-2">
+                <span class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8 text-yellow-400 print:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    퇴사자 연차 정산 리포트
+                </span>
             </h1>
-            <div class="flex flex-col md:flex-row md:items-center justify-between mt-2">
-                <p class="text-slate-400 text-sm print:text-gray-600 flex items-center gap-2">
-                    <span>기준일(작성일): <span id="current-date-display" class="font-bold text-white print:text-black"></span></span>
+            <div class="flex flex-col md:flex-row md:items-center justify-between mt-3 md:mt-2 gap-2">
+                <p class="text-slate-400 text-xs md:text-sm print:text-gray-600 flex items-center gap-2">
+                    <span>기준일: <span id="current-date-display" class="font-bold text-white print:text-black"></span></span>
                 </p>
-                <div class="mt-2 md:mt-0 flex items-center gap-2">
-                     <span class="inline-block bg-slate-700 text-yellow-300 text-xs px-2 py-1 rounded print:border print:border-black print:text-black print:bg-white">
+                <div class="flex items-center gap-2">
+                     <span class="inline-block bg-slate-700 text-yellow-300 text-[10px] md:text-xs px-2 py-1 rounded print:border print:border-black print:text-black print:bg-white">
                         🕒 접속일 기준 미래 연차 자동 제외
                     </span>
                 </div>
@@ -81,29 +84,29 @@
         </header>
 
         <!-- Tabs -->
-        <div class="flex border-b border-gray-200 print:hidden">
-            <button onclick="switchTab('tab1')" id="btn-tab1" class="flex-1 py-4 text-center tab-active transition-colors duration-200">
-                1. 김혜민 <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full ml-1">확인필요</span>
+        <div class="flex border-b border-gray-200 print:hidden overflow-x-auto">
+            <button onclick="switchTab('tab1')" id="btn-tab1" class="flex-1 py-3 md:py-4 px-2 text-center text-sm md:text-base whitespace-nowrap tab-active transition-colors duration-200">
+                1. 김혜민 <span class="hidden md:inline text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full ml-1">확인필요</span>
             </button>
-            <button onclick="switchTab('tab2')" id="btn-tab2" class="flex-1 py-4 text-center tab-inactive transition-colors duration-200">
-                2. 김지민 <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full ml-1">미사용 정산</span>
+            <button onclick="switchTab('tab2')" id="btn-tab2" class="flex-1 py-3 md:py-4 px-2 text-center text-sm md:text-base whitespace-nowrap tab-inactive transition-colors duration-200">
+                2. 김지민 <span class="hidden md:inline text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full ml-1">미사용 정산</span>
             </button>
-            <button onclick="switchTab('tab3')" id="btn-tab3" class="flex-1 py-4 text-center tab-inactive transition-colors duration-200">
-                3. 서예은 <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full ml-1">복합 정산</span>
+            <button onclick="switchTab('tab3')" id="btn-tab3" class="flex-1 py-3 md:py-4 px-2 text-center text-sm md:text-base whitespace-nowrap tab-inactive transition-colors duration-200">
+                3. 서예은 <span class="hidden md:inline text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full ml-1">복합 정산</span>
             </button>
         </div>
 
         <!-- Content Area -->
-        <div class="p-6 md:p-8">
+        <div class="p-4 md:p-8">
 
             <!-- Tab 1: 김혜민 -->
             <div id="tab1" class="tab-content block">
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-2">
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">김혜민 (진료실)</h2>
-                        <p class="text-sm text-gray-500">입사일: 2020-07-01</p>
+                        <h2 class="text-lg md:text-xl font-bold text-gray-900">김혜민</h2>
+                        <p class="text-xs md:text-sm text-gray-500">입사일: 2020-07-01</p>
                     </div>
-                    <div class="bg-yellow-50 text-yellow-800 px-4 py-2 rounded-lg text-sm font-semibold border border-yellow-200 print:border-black print:text-black">
+                    <div class="bg-yellow-50 text-yellow-800 px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold border border-yellow-200 print:border-black print:text-black self-start md:self-auto">
                         상태: 단순 기재 오류 (금전 정산 불필요 예상)
                     </div>
                 </div>
@@ -327,12 +330,12 @@
 
             <!-- Tab 2: 김지민 -->
             <div id="tab2" class="tab-content hidden">
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-2">
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">김지민 (진료실)</h2>
-                        <p class="text-sm text-gray-500">입사일: 2021-03-02</p>
+                        <h2 class="text-lg md:text-xl font-bold text-gray-900">김지민</h2>
+                        <p class="text-xs md:text-sm text-gray-500">입사일: 2021-03-02</p>
                     </div>
-                    <div class="bg-green-50 text-green-800 px-4 py-2 rounded-lg text-sm font-semibold border border-green-200 print:border-black print:text-black">
+                    <div class="bg-green-50 text-green-800 px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold border border-green-200 print:border-black print:text-black self-start md:self-auto">
                         상태: 미사용 연차 존재 (수당 지급 예상)
                     </div>
                 </div>
@@ -534,12 +537,12 @@
 
             <!-- Tab 3: 서예은 -->
             <div id="tab3" class="tab-content hidden">
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-2">
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">서예은 (진료실)</h2>
-                        <p class="text-sm text-gray-500">입사일: 2023-03-02</p>
+                        <h2 class="text-lg md:text-xl font-bold text-gray-900">서예은</h2>
+                        <p class="text-xs md:text-sm text-gray-500">입사일: 2023-03-02</p>
                     </div>
-                    <div class="bg-red-50 text-red-800 px-4 py-2 rounded-lg text-sm font-semibold border border-red-200 print:border-black print:text-black">
+                    <div class="bg-red-50 text-red-800 px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold border border-red-200 print:border-black print:text-black self-start md:self-auto">
                         상태: 복합 (초과 + 미사용 상계 필요)
                     </div>
                 </div>
@@ -794,7 +797,7 @@
         </div>
         
         <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end print:hidden">
-            <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 px-4 rounded inline-flex items-center transition-colors">
+            <button onclick="printReport()" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 px-4 rounded inline-flex items-center transition-colors">
                 <svg class="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/></svg>
                 리포트 출력하기
             </button>
@@ -875,6 +878,19 @@
 
         function formatCurrency(num) {
             return new Intl.NumberFormat('ko-KR').format(Math.round(num)) + '원';
+        }
+
+        // Print Report Function: Expands all details before printing
+        function printReport() {
+            // Open all details elements
+            document.querySelectorAll('details').forEach(el => {
+                el.open = true;
+            });
+            
+            // Give a slight delay to ensure rendering update before print dialog opens
+            setTimeout(() => {
+                window.print();
+            }, 100);
         }
 
         // Kim Hye-min Calculator
