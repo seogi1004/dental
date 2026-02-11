@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>퇴사자 연차 정산 리포트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS 설정을 위한 style 태그 (type 속성 추가됨) -->
+    <style type="text/tailwindcss">
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        
+        .tab-active { @apply border-b-2 border-blue-600 text-blue-600 font-bold; }
+        .tab-inactive { @apply text-gray-500 font-medium hover:text-gray-700; }
+        
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        
+        .future-leave { @apply transition-all duration-300; }
+        .future-hidden { @apply line-through opacity-50; }
+        .future-hidden::after { content: " (미래)"; @apply text-[0.8em] text-red-500 ml-1; }
+        
+        /* Updated Styles for Quarterly View */
+        .quarter-box { 
+            @apply bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm h-full; 
+        }
+        .quarter-title { 
+            @apply text-[11px] font-bold text-slate-500 mb-2 border-b border-slate-100 pb-1 block uppercase tracking-tight; 
+        }
+        .badge-container {
+            @apply flex flex-wrap gap-1;
+        }
+        .date-badge { 
+            @apply inline-flex items-center justify-center text-[11px] bg-slate-50 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-md; 
+        }
+        
+        /* Badge Variants */
+        .date-badge.error { @apply bg-red-50 text-red-600 border-red-200 font-medium; }
+        .date-badge.check { @apply bg-blue-50 text-blue-600 border-blue-200 font-medium; }
+        .date-badge.invalid-leave { @apply bg-red-100 text-red-700 border-red-300 line-through decoration-red-500; }
+        .date-badge.purple-highlight { @apply bg-purple-50 text-purple-700 border-purple-200 font-bold; }
+        
+        /* Labels inside badges */
+        .badge-label { @apply text-[9px] ml-1 opacity-70; }
+        
+        /* Invalid leave pseudo-element override for text content */
+        .date-badge.invalid-leave::after { content: " (오류)"; @apply text-[0.7em] text-red-700 font-bold ml-1 no-underline inline-block; }
+        .date-badge.purple-highlight::after { content: " (불일치)"; @apply text-[0.7em] text-purple-700 ml-1; }
+
+        /* Year Header with Count */
+        .year-header { @apply font-bold text-gray-700 mb-2 border-b pb-1 text-sm flex justify-between items-center; }
+        .count-badge { @apply text-[10px] font-normal bg-gray-100 text-gray-600 px-2 py-0.5 rounded border border-gray-200; }
+        .count-badge.warning { @apply bg-red-50 text-red-600 border-red-200 font-bold; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 md:p-8 print:bg-white print:p-0">
+
+    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-xl overflow-hidden print:shadow-none">
+        <!-- Header -->
+        <header class="bg-slate-800 text-white p-6 print:bg-white print:text-black print:border-b-2 print:border-black">
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-400 print:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                퇴사자 연차 정산 및 점검 리포트
+            </h1>
+            <div class="flex flex-col md:flex-row md:items-center justify-between mt-2">
+                <p class="text-slate-400 text-sm print:text-gray-600 flex items-center gap-2">
+                    <span>기준일(작성일): <span id="current-date-display" class="font-bold text-white print:text-black"></span></span>
+                </p>
+                <div class="mt-2 md:mt-0 flex items-center gap-2">
+                     <span class="inline-block bg-slate-700 text-yellow-300 text-xs px-2 py-1 rounded print:border print:border-black print:text-black print:bg-white">
+                        🕒 접속일 기준 미래 연차 자동 제외
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-200 print:hidden">
+            <button onclick="switchTab('tab1')" id="btn-tab1" class="flex-1 py-4 text-center tab-active transition-colors duration-200">
+                1. 김혜민 <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full ml-1">확인필요</span>
+            </button>
+            <button onclick="switchTab('tab2')" id="btn-tab2" class="flex-1 py-4 text-center tab-inactive transition-colors duration-200">
+                2. 김지민 <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full ml-1">미사용 정산</span>
+            </button>
+            <button onclick="switchTab('tab3')" id="btn-tab3" class="flex-1 py-4 text-center tab-inactive transition-colors duration-200">
+                3. 서예은 <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full ml-1">복합 정산</span>
+            </button>
+        </div>
+
+        <!-- Content Area -->
+        <div class="p-6 md:p-8">
+
+            <!-- Tab 1: 김혜민 -->
+            <div id="tab1" class="tab-content block">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">김혜민 (진료실)</h2>
+                        <p class="text-sm text-gray-500">입사일: 2020-07-01</p>
+                    </div>
+                    <div class="bg-yellow-50 text-yellow-800 px-4 py-2 rounded-lg text-sm font-semibold border border-yellow-200 print:border-black print:text-black">
+                        상태: 단순 기재 오류 (금전 정산 불필요 예상)
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Issue Card -->
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg print:border-black print:bg-white">
+                        <h3 class="font-bold text-red-700 mb-2 print:text-black">🚨 2022년 내역 점검 필요</h3>
+                        <ul class="list-disc list-inside text-sm text-red-800 space-y-1 print:text-black">
+                            <li><strong>부여:</strong> 15일 vs <strong>기재:</strong> 16회</li>
+                            <li><strong>오류 내용:</strong> '2022-04-09' 날짜가 엑셀 상단과 하단에 <span class="underline decoration-wavy">중복 기재</span>됨.</li>
+                            <li><strong>조치:</strong> 중복 삭제 시 정상(15일) 사용으로 간주. 추가 공제 불필요.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Calculator Section -->
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm print:hidden">
+                        <h3 class="font-bold text-gray-700 mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            정산 시뮬레이터
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">1일 통상임금 (원)</label>
+                                <input type="number" id="wage1" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2 border" placeholder="예: 80000" oninput="calculate1()">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">정산 대상 일수</label>
+                                <select id="days1" class="w-full border-gray-300 rounded-md shadow-sm p-2 border" onchange="calculate1()">
+                                    <option value="0">0일 (중복오류 인정 시)</option>
+                                    <option value="-1">-1일 (실제 초과 사용 시)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4 p-4 bg-gray-50 rounded-lg flex justify-between items-center">
+                            <span class="text-gray-600 font-medium">최종 정산 금액:</span>
+                            <span id="result1" class="text-2xl font-bold text-gray-400">0원</span>
+                        </div>
+                    </div>
+
+                    <!-- Individual Raw Data: Kim Hye-min (Quarterly) -->
+                    <details class="group bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-4 bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors">
+                            <span class="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                김혜민 상세 사용 내역 (분기별 보기)
+                            </span>
+                            <span class="transition group-open:rotate-180">
+                                <svg fill="none" height="24" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                            </span>
+                        </summary>
+                        <div class="p-4 bg-gray-50 border-t border-gray-100 space-y-4">
+                            
+                            <!-- 2021 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2021년</span>
+                                    <span class="count-badge">7 / 7</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기 (1~3월)</span><div class="badge-container"><span class="text-gray-300 text-[10px]">-</span></div></div>
+                                    <div class="quarter-box"><span class="quarter-title">2분기 (4~6월)</span><div class="badge-container"><span class="text-gray-300 text-[10px]">-</span></div></div>
+                                    <div class="quarter-box"><span class="quarter-title">3분기 (7~9월)</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">09-28</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">4분기 (10~12월+)</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">10-19</span><span class="date-badge">11-09</span><span class="date-badge">11-16</span><span class="date-badge">11-18</span><span class="date-badge">11-30</span>
+                                        </div>
+                                        <div class="mt-2 pt-1 border-t border-dashed border-gray-100"><span class="text-[9px] text-gray-400 mr-1">이월:</span> <span class="date-badge">22-01-25</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2022 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2022년 <span class="text-red-500 text-xs font-normal ml-1">(중복 오류)</span></span>
+                                    <span class="count-badge warning">16(15) / 15</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">03-28</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box bg-red-50/30 border-red-100"><span class="quarter-title text-red-600 border-red-100">2분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge error">04-09<span class="badge-label">(중복1)</span></span><span class="date-badge">04-26</span><span class="date-badge">06-23</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">3분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">07-01</span><span class="date-badge">07-18</span><span class="date-badge">07-26</span><span class="date-badge">08-16</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box bg-red-50/30 border-red-100"><span class="quarter-title text-red-600 border-red-100">4분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">10-07</span><span class="date-badge">10-21</span><span class="date-badge">11-10</span><span class="date-badge">11-14</span><span class="date-badge">11-25</span><span class="date-badge">12-19</span><span class="date-badge">12-30</span>
+                                        </div>
+                                        <div class="mt-2 pt-1 border-t border-dashed border-red-200"><span class="date-badge error">04-09<span class="badge-label">(중복2)</span></span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2023 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2023년</span>
+                                    <span class="count-badge">16 / 16</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">02-06</span><span class="date-badge">03-11</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">2분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">04-03</span><span class="date-badge">04-13<span class="badge-label">오후</span></span><span class="date-badge">04-25</span><span class="date-badge">04-26</span><span class="date-badge">05-08</span><span class="date-badge">06-09<span class="badge-label">오전</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">3분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">07-03<span class="badge-label">오전</span></span><span class="date-badge">08-21</span><span class="date-badge">09-01</span><span class="date-badge">09-07<span class="badge-label">오전</span></span><span class="date-badge">09-21</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">4분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">10-23</span><span class="date-badge">10-24</span><span class="date-badge">11-20</span><span class="date-badge">11-30</span><span class="date-badge">12-19<span class="badge-label">오전</span></span><span class="date-badge">12-29<span class="badge-label">오후</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2024 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2024년</span>
+                                    <span class="count-badge">16 / 16</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">01-24</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">2분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">04-02<span class="badge-label">오후</span></span><span class="date-badge">04-15</span><span class="date-badge">04-17</span><span class="date-badge">06-11</span><span class="date-badge">06-12</span><span class="date-badge">06-13</span><span class="date-badge">06-15</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">3분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">07-15<span class="badge-label">오전</span></span><span class="date-badge">07-19</span><span class="date-badge">09-26</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">4분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">10-18</span><span class="date-badge">10-19</span><span class="date-badge">11-21</span><span class="date-badge">12-09</span><span class="date-badge">12-27</span><span class="date-badge">12-30</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 2025 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2025년</span>
+                                    <span class="count-badge">17 / 17</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">01-25</span><span class="date-badge">03-29</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">2분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">04-01<span class="badge-label">오후</span></span><span class="date-badge">05-12</span><span class="date-badge">05-24</span><span class="date-badge">06-09<span class="badge-label">오전</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">3분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">08-11</span><span class="date-badge">09-22</span><span class="date-badge">09-26<span class="badge-label">오후</span></span><span class="date-badge">09-30</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">4분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">10-01</span><span class="date-badge">10-02</span><span class="date-badge">10-20</span><span class="date-badge">11-17</span><span class="date-badge">12-23<span class="badge-label">오전</span></span><span class="date-badge">12-24</span><span class="date-badge">12-29</span><span class="date-badge">12-30</span><span class="date-badge">12-31</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                             <!-- 2026 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2026년</span>
+                                    <span class="count-badge">5(미래3) / 17</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">01-06</span><span class="date-badge">01-08</span><span class="date-badge">01-09</span><span class="date-badge">01-26</span><span class="date-badge">02-11</span>
+                                            <span class="date-badge future-leave" data-date="2026-02-12">02-12</span><span class="date-badge future-leave" data-date="2026-02-13">02-13</span><span class="date-badge future-leave" data-date="2026-02-14">02-14</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">2분기~</span><div class="badge-container"><span class="text-gray-400 text-[10px]">퇴사 예정</span></div></div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Tab 2: 김지민 -->
+            <div id="tab2" class="tab-content hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">김지민 (진료실)</h2>
+                        <p class="text-sm text-gray-500">입사일: 2021-03-02</p>
+                    </div>
+                    <div class="bg-green-50 text-green-800 px-4 py-2 rounded-lg text-sm font-semibold border border-green-200 print:border-black print:text-black">
+                        상태: 미사용 연차 존재 (수당 지급 예상)
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Issue Card -->
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg print:border-black print:bg-white">
+                        <h3 class="font-bold text-blue-700 mb-2 print:text-black">ℹ️ 2023년 내역 점검</h3>
+                        <ul class="list-disc list-inside text-sm text-blue-800 space-y-1 print:text-black">
+                            <li><strong>부여:</strong> 15일 vs <strong>사용:</strong> 14.5일</li>
+                            <li><strong>발견:</strong> '5/17' 반차(0.5) 사용 후, 나머지 0.5일 사용 기록 없음.</li>
+                            <li><strong>결론:</strong> 누락된 기록이 없다면 <span class="font-bold">0.5일 미사용 수당 지급</span> 필요.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Calculator Section -->
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm print:hidden">
+                         <h3 class="font-bold text-gray-700 mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            미사용 수당 계산기
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">1일 통상임금 (원)</label>
+                                <input type="number" id="wage2" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 p-2 border" placeholder="예: 80000" oninput="calculate2()">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">미사용 잔여 일수</label>
+                                <input type="number" id="days2" value="0.5" step="0.5" class="w-full border-gray-300 rounded-md shadow-sm p-2 border bg-gray-100" readonly>
+                            </div>
+                        </div>
+                        <div class="mt-4 p-4 bg-green-50 rounded-lg flex justify-between items-center border border-green-100">
+                            <span class="text-green-800 font-medium">지급해야 할 금액:</span>
+                            <span id="result2" class="text-2xl font-bold text-green-600">0원</span>
+                        </div>
+                    </div>
+
+                    <!-- Individual Raw Data: Kim Ji-min (Quarterly) -->
+                    <details class="group bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-4 bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors">
+                            <span class="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                김지민 상세 사용 내역 (분기별 보기)
+                            </span>
+                            <span class="transition group-open:rotate-180">
+                                <svg fill="none" height="24" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                            </span>
+                        </summary>
+                        <div class="p-4 bg-gray-50 border-t border-gray-100 space-y-4">
+                            
+                            <!-- 2021 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2021년</span>
+                                    <span class="count-badge">6 / 6</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">2분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">04-20</span><span class="date-badge">04-21</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">4분기+</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">10-05</span><span class="date-badge">11-15</span>
+                                        </div>
+                                        <div class="mt-2 pt-1 border-t border-dashed border-gray-100"><span class="text-[9px] text-gray-400 mr-1">이월:</span> <span class="date-badge">22-01-15</span><span class="date-badge">22-01-20</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2022 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2022년</span>
+                                    <span class="count-badge">13 / 13</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">01-21</span><span class="date-badge">02-03</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">2분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">06-11</span><span class="date-badge">06-14</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">3분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">07-07</span><span class="date-badge">08-27</span><span class="date-badge">09-24</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">4분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">10-18</span><span class="date-badge">10-20</span><span class="date-badge">11-19</span><span class="date-badge">11-25</span><span class="date-badge">12-13</span><span class="date-badge">12-17</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2023 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2023년 <span class="text-blue-500 text-xs font-normal ml-1">(미사용 의심)</span></span>
+                                    <span class="count-badge warning">14.5 / 15</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">01-14</span><span class="date-badge">02-11</span><span class="date-badge">03-04</span><span class="date-badge">03-07</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box bg-blue-50/30 border-blue-100"><span class="quarter-title text-blue-600 border-blue-100">2분기 (체크)</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">04-15</span><span class="date-badge">04-24<span class="badge-label">오후</span></span><span class="date-badge check">05-17<span class="badge-label">반차</span></span><span class="date-badge">06-05</span><span class="date-badge">06-07</span><span class="date-badge">06-08<span class="badge-label">오전</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">3분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">07-22</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">4분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">10-10</span><span class="date-badge">11-25</span><span class="date-badge">11-27</span><span class="date-badge">12-29</span><span class="date-badge">12-30</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2024 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2024년</span>
+                                    <span class="count-badge">16 / 16</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">01-24</span><span class="date-badge">01-25</span><span class="date-badge">02-28<span class="badge-label">오후</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">2분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">04-08</span><span class="date-badge">04-09</span><span class="date-badge">04-16</span><span class="date-badge">05-07<span class="badge-label">오전</span></span><span class="date-badge">06-24</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">3분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">08-02</span><span class="date-badge">08-06</span><span class="date-badge">09-09</span><span class="date-badge">09-19</span><span class="date-badge">09-30</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">4분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">11-12</span><span class="date-badge">12-16</span><span class="date-badge">12-23</span><span class="date-badge">12-24</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 2025 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2025년</span>
+                                    <span class="count-badge">16 / 16</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">01-03</span><span class="date-badge">02-08</span><span class="date-badge">03-24</span><span class="date-badge">03-25</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">2분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">04-23<span class="badge-label">오후</span></span><span class="date-badge">05-19<span class="badge-label">오전</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">3분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">07-28</span><span class="date-badge">08-18</span><span class="date-badge">09-29</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">4분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">10-10</span><span class="date-badge">10-15<span class="badge-label">오후</span></span><span class="date-badge">10-24</span><span class="date-badge">11-03</span><span class="date-badge">12-15</span><span class="date-badge">12-17<span class="badge-label">오전</span></span><span class="date-badge">12-26</span><span class="date-badge">12-27</span>
+                                        </div>
+                                        <div class="mt-2 pt-1 border-t border-dashed border-gray-100"><span class="text-[9px] text-gray-400 mr-1">이월:</span> <span class="date-badge">26-01-02</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Tab 3: 서예은 -->
+            <div id="tab3" class="tab-content hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">서예은 (진료실)</h2>
+                        <p class="text-sm text-gray-500">입사일: 2023-03-02</p>
+                    </div>
+                    <div class="bg-red-50 text-red-800 px-4 py-2 rounded-lg text-sm font-semibold border border-red-200 print:border-black print:text-black">
+                        상태: 복합 (초과 + 미사용 상계 필요)
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Issue Summary Table -->
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg mb-4 print:border-black print:bg-white">
+                        <h3 class="font-bold text-red-700 mb-2 print:text-black">🚨 2026년 데이터 주의 (Ghost Data)</h3>
+                        <p class="text-sm text-red-800 print:text-black">
+                            서예은 님은 <strong>'26년 2월'</strong>까지 근무 후 퇴사 예정이나, 엑셀 파일에는 3월 이후(3/31, 5/10...)의 기록이 남아 있습니다.<br>
+                            이는 <span class="font-bold underline">2025년 데이터가 2026년 시트에 잘못 복사(중복)된 것</span>으로 판단되므로 정산에서 제외해야 합니다.
+                        </p>
+                    </div>
+
+                    <div class="overflow-hidden border border-gray-200 rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">연도</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">내용</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">정산 일수</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2024년</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">
+                                        <p class="text-red-600 font-bold">1.5일 초과 사용</p>
+                                        <p class="text-xs mt-1">(*4/17 중복 삭제 시 1.0일 초과)</p>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-600">-1.5일</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025~26년</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">
+                                        <p class="text-green-600 font-bold">0.5일 미사용</p>
+                                        <p class="text-xs mt-1">(*6/10 반차 짝 누락, 3월 이후 데이터 무시)</p>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-green-600">+0.5일</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="bg-gray-100">
+                                <tr>
+                                    <td colspan="2" class="px-6 py-3 text-right font-bold text-gray-700">합계 (상계 처리)</td>
+                                    <td class="px-6 py-3 text-right font-bold text-gray-900 text-lg">-1.0일 (공제)</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- Calculator Section -->
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm print:hidden">
+                         <h3 class="font-bold text-gray-700 mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            복합 정산 계산기 (초과 vs 미사용)
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">1일 통상임금 (원)</label>
+                                <input type="number" id="wage3" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2 border" placeholder="예: 80000" oninput="calculate3()">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">상계 후 최종 일수</label>
+                                <select id="days3" class="w-full border-gray-300 rounded-md shadow-sm p-2 border" onchange="calculate3()">
+                                    <option value="-1.5"> -1.5일 (중복 미인정, 초과 공제)</option>
+                                    <option value="-1.0" selected> -1.0일 (중복 인정, 상계 후 공제)</option>
+                                    <option value="-0.5"> -0.5일 (최소 공제 시나리오)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 p-4 rounded-lg flex justify-between items-center border" id="result-box-3">
+                            <span class="text-gray-700 font-medium" id="result-label-3">최종 공제 금액:</span>
+                            <span id="result3" class="text-2xl font-bold text-gray-400">0원</span>
+                        </div>
+                         <p class="text-xs text-gray-500 mt-2">
+                            * (-) 마이너스일 경우 급여에서 <strong>공제(차감)</strong>해야 하며, (+) 플러스일 경우 <strong>지급</strong>해야 합니다.
+                        </p>
+                    </div>
+
+                    <!-- Individual Raw Data: Seo Ye-eun (Quarterly) -->
+                    <details class="group bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-4 bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors">
+                            <span class="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                서예은 상세 사용 내역 (분기별 보기)
+                            </span>
+                            <span class="transition group-open:rotate-180">
+                                <svg fill="none" height="24" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                            </span>
+                        </summary>
+                        <div class="p-4 bg-gray-50 border-t border-gray-100 space-y-4">
+
+                             <!-- 2023 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2023년</span>
+                                    <span class="count-badge">9 / 9</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기</span><div class="badge-container"><span class="text-gray-300 text-[10px]">-</span></div></div>
+                                    <div class="quarter-box"><span class="quarter-title">2분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">05-19</span><span class="date-badge">05-23</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">3분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">07-17</span><span class="date-badge">08-14</span><span class="date-badge">08-16</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">4분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">10-16</span><span class="date-badge">11-03</span><span class="date-badge">11-04</span><span class="date-badge">11-06</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2024 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2024년 <span class="text-red-500 text-xs font-normal ml-1">(중복/초과)</span></span>
+                                    <span class="count-badge warning">16.5 / 15</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">02-17</span><span class="date-badge">02-24</span><span class="date-badge">03-29<span class="badge-label">오전</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box bg-red-50/30 border-red-100"><span class="quarter-title text-red-600 border-red-100">2분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">04-03<span class="badge-label">오전</span></span><span class="date-badge">04-11</span><span class="date-badge">04-12</span><span class="date-badge">04-13</span>
+                                            <span class="date-badge error">04-17<span class="badge-label">(중복)</span></span><span class="date-badge">04-19</span><span class="date-badge">04-20</span><span class="date-badge">05-24<span class="badge-label">오후</span></span><span class="date-badge">05-31</span><span class="date-badge">06-22</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">3분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">07-05<span class="badge-label">오후</span></span><span class="date-badge">07-09<span class="badge-label">오전</span></span><span class="date-badge">08-16<span class="badge-label">오전</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">4분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">10-24</span><span class="date-badge">12-02</span><span class="date-badge">12-03</span><span class="date-badge">12-04</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 2025 -->
+                            <div>
+                                <h4 class="year-header">
+                                    <span>2025년 <span class="text-green-600 text-xs font-normal ml-1">(미사용 잔여)</span></span>
+                                    <span class="count-badge warning">14.5 / 15</span>
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">01-22</span><span class="date-badge">01-31</span><span class="date-badge">02-01</span><span class="date-badge">02-03</span><span class="date-badge">03-31</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box bg-green-50/30 border-green-100"><span class="quarter-title text-green-700 border-green-100">2분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">05-10</span><span class="date-badge">06-07</span><span class="date-badge check">06-10<span class="badge-label">(반차)</span></span><span class="date-badge">06-12</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">3분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">09-15</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">4분기+</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge">11-24</span><span class="date-badge">12-13</span>
+                                        </div>
+                                        <div class="mt-2 pt-1 border-t border-dashed border-gray-100"><span class="text-[9px] text-gray-400 mr-1">이월:</span> <span class="date-badge">26-01-12</span><span class="date-badge">26-02-04</span><span class="date-badge future-leave" data-date="2026-02-23">02-23<span class="badge-label">(미래)</span></span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                             <!-- 2026 -->
+                             <div>
+                                <h4 class="year-header">
+                                    <span>2026년 파일 기록 <span class="text-purple-600 text-xs font-normal ml-1">(데이터 불일치 존재)</span></span>
+                                    <span class="count-badge warning">데이터 오류 / 15</span>
+                                </h4>
+                                <p class="text-[10px] text-gray-400 mb-2">※ 아래 데이터는 2025년 파일의 복사본으로 추정됩니다. (취소선 = 무효 데이터)</p>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                    <div class="quarter-box"><span class="quarter-title">1분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge invalid-leave">01-22</span><span class="date-badge invalid-leave">01-31</span><span class="date-badge invalid-leave">02-01</span><span class="date-badge invalid-leave">02-03</span><span class="date-badge invalid-leave">03-31</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">2분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge invalid-leave">05-10</span><span class="date-badge invalid-leave">06-07</span><span class="date-badge invalid-leave">06-10</span><span class="date-badge invalid-leave">06-12</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">3분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge invalid-leave">09-15</span>
+                                        </div>
+                                    </div>
+                                    <div class="quarter-box"><span class="quarter-title">4분기</span>
+                                        <div class="badge-container">
+                                            <span class="date-badge invalid-leave">11-24</span> <span class="date-badge purple-highlight">12-08</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- New Section: Objective Evaluation of Excel Management -->
+            <div class="mt-8 bg-slate-100 border border-slate-300 rounded-xl p-6 print:break-inside-avoid shadow-sm">
+                <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center border-b border-slate-300 pb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    [긴급] 연차 관리 실태 점검 및 개선 권고
+                </h3>
+                <div class="space-y-4 text-sm text-slate-700 leading-relaxed">
+                    <p class="font-medium text-red-600">※ 본 리포트 작성 과정에서 확인된 귀사의 엑셀 관리 방식은 심각한 휴먼 에러 위험을 내포하고 있습니다.</p>
+                    
+                    <ul class="list-disc list-outside ml-5 space-y-2">
+                        <li>
+                            <strong class="text-slate-900">데이터 신뢰성 상실 (Ghost Data):</strong> 
+                            2026년 파일에 2025년 데이터가 그대로 복사/붙여넣기 되어 있어, 퇴사 예정자의 미래 연차 내역이 작년 기록으로 오염되어 있습니다. 이는 단순 실수를 넘어 회계/노무 리스크로 직결될 수 있는 문제입니다.
+                        </li>
+                        <li>
+                            <strong class="text-slate-900">중복 기재 및 누락:</strong> 
+                            김혜민 님의 4월 9일 중복 기재, 서예은 님의 4월 17일 중복 기재 등, 엑셀의 자동 검증 기능 부재로 인해 눈으로 확인하지 않으면 발견하기 어려운 오류가 다수 존재합니다.
+                        </li>
+                        <li>
+                            <strong class="text-slate-900">표준화되지 않은 날짜 형식:</strong> 
+                            '2024-01-01', '1월 1일', '1/1', '오전/오후' 등이 혼용되어 있어 자동 합산이 불가능합니다. 담당자가 일일이 수기로 세어야 하므로 시간 낭비는 물론 정산 오류 가능성이 매우 높습니다.
+                        </li>
+                    </ul>
+                    
+                    <div class="mt-4 p-3 bg-white border border-red-200 rounded text-xs text-red-700 font-bold">
+                        결론: 현재의 수기 관리 방식은 한계가 명확합니다. 급여 및 퇴직금 정산과 직결되는 사안인 만큼, 즉시 체계적인 연차 관리 시스템 도입 또는 엑셀 서식의 전면 개편을 권고드립니다.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        
+        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end print:hidden">
+            <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 px-4 rounded inline-flex items-center transition-colors">
+                <svg class="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/></svg>
+                리포트 출력하기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Pure function to check if a date string is in the future relative to a base date
+        function isFutureDate(dateStr, baseDate) {
+            if (!dateStr) return false;
+            
+            // Safari safe parsing: manually parse YYYY-MM-DD
+            // new Date("YYYY-MM-DD") can be interpreted as UTC in some contexts, 
+            // while we want local time midnight.
+            const parts = dateStr.split('-');
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const day = parseInt(parts[2], 10);
+            
+            const target = new Date(year, month, day);
+            
+            // Clone baseDate to avoid mutation
+            const compareBase = new Date(baseDate);
+            compareBase.setHours(0, 0, 0, 0);
+            
+            target.setHours(0, 0, 0, 0);
+            
+            return target > compareBase;
+        }
+
+        // On Load: Update Date and Filter Future Leaves
+        window.onload = function() {
+            updateReportDate();
+        };
+
+        function updateReportDate() {
+            // 1. Set Display Date to Today
+            const today = new Date();
+            const dateOptions = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('current-date-display').innerText = today.toLocaleDateString('ko-KR', dateOptions);
+
+            // 2. Filter Future Leaves
+            const futureElements = document.querySelectorAll('.future-leave');
+            
+            futureElements.forEach(el => {
+                const leaveDateStr = el.getAttribute('data-date');
+                
+                // Use pure function logic
+                if (isFutureDate(leaveDateStr, today)) {
+                    el.classList.add('future-hidden');
+                    el.classList.remove('font-bold');
+                } else {
+                    el.classList.remove('future-hidden');
+                }
+            });
+        }
+
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
+            
+            // Reset tab styles
+            document.querySelectorAll('button[id^="btn-tab"]').forEach(btn => {
+                btn.classList.remove('tab-active', 'border-b-2', 'border-blue-600', 'text-blue-600', 'font-bold');
+                btn.classList.add('tab-inactive', 'text-gray-500', 'font-medium');
+            });
+
+            // Show selected tab
+            document.getElementById(tabId).classList.remove('hidden');
+            document.getElementById(tabId).classList.add('block');
+
+            // Highlight selected button
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.remove('tab-inactive', 'text-gray-500', 'font-medium');
+            activeBtn.classList.add('tab-active', 'text-blue-600', 'font-bold');
+        }
+
+        function formatCurrency(num) {
+            return new Intl.NumberFormat('ko-KR').format(Math.round(num)) + '원';
+        }
+
+        // Kim Hye-min Calculator
+        function calculate1() {
+            const wage = document.getElementById('wage1').value;
+            const days = document.getElementById('days1').value;
+            const resultEl = document.getElementById('result1');
+            
+            if(wage && days) {
+                const total = wage * days;
+                resultEl.innerText = formatCurrency(total);
+                if(total < 0) {
+                    resultEl.className = "text-2xl font-bold text-red-600";
+                    resultEl.innerText += " (공제)";
+                } else if (total > 0) {
+                    resultEl.className = "text-2xl font-bold text-blue-600";
+                } else {
+                    resultEl.className = "text-2xl font-bold text-gray-400";
+                }
+            }
+        }
+
+        // Kim Ji-min Calculator
+        function calculate2() {
+            const wage = document.getElementById('wage2').value;
+            const days = 0.5; // Fixed based on report
+            const resultEl = document.getElementById('result2');
+            
+            if(wage) {
+                const total = wage * days;
+                resultEl.innerText = formatCurrency(total);
+            }
+        }
+
+        // Seo Ye-eun Calculator
+        function calculate3() {
+            const wage = document.getElementById('wage3').value;
+            const days = document.getElementById('days3').value;
+            const resultEl = document.getElementById('result3');
+            const boxEl = document.getElementById('result-box-3');
+            const labelEl = document.getElementById('result-label-3');
+            
+            if(wage && days) {
+                const total = wage * days;
+                resultEl.innerText = formatCurrency(Math.abs(total)); // Show absolute value for amount
+
+                if(days < 0) {
+                    // Deduction
+                    resultEl.className = "text-2xl font-bold text-red-600";
+                    boxEl.className = "mt-4 p-4 bg-red-50 rounded-lg flex justify-between items-center border border-red-100";
+                    labelEl.innerText = "공제(차감) 금액:";
+                    labelEl.className = "text-red-800 font-medium";
+                } else {
+                    // Payment
+                    resultEl.className = "text-2xl font-bold text-green-600";
+                    boxEl.className = "mt-4 p-4 bg-green-50 rounded-lg flex justify-between items-center border border-green-100";
+                    labelEl.innerText = "지급해야 할 금액:";
+                    labelEl.className = "text-green-800 font-medium";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
